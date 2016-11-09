@@ -5,10 +5,10 @@ const style = {
         backgroundColor: 'black',
         color: 'white',
         display: 'inline-block',
+        verticalAlign: 'top',
         width: '100%',
         heigth: '100%',
-        position: 'relative',
-        transform: 'translate3d(0, 0, 0)'
+        position: 'relative'
     },
     title: {
         textAlign: 'center'
@@ -16,13 +16,13 @@ const style = {
 }
 
 const animationNext = {
-    transition: 'all 500ms ease',
-    transform: 'translate3d(-100%, 0, 0)'
+    transform: 'translate3d(-100%, 0, 0)',
+    duration: 500
 };
 
 const animationBack = {
     flip: true,
-    transition: 'all 500ms ease',
+    duration: 500,
     transform: 'translate3d(0, 0, 0)'
 };
 

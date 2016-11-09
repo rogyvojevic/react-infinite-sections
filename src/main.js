@@ -27,7 +27,7 @@ class IS extends Component {
 		this.state = {
 			...props,
 			previous: null,
-			current: null,
+			current: null
 		};
 		this.timeoutId = null;
 
@@ -41,6 +41,10 @@ class IS extends Component {
 	getSectionElement(section, id, animation) {		
 		let sectionElement = null;
 
+		if (!animation || !animation.duration || !animation.transform) {
+			animation = false;
+		}
+
 		if (section === 'root') {
 			sectionElement = this.state.config.root;
 		} else {
@@ -51,16 +55,8 @@ class IS extends Component {
 		this.setState(Object.assign({}, this.state, {
 			previous: this.state.current,
 			current: sectionElement,
-			animate: true,
 			animation
-		}), () => {
-			setTimeout(() => {
-				this.IS.children[0].style['transition'] = animation.transition;
-				this.IS.children[1].style['transition'] = animation.transition;
-				this.IS.children[0].style['transform'] = animation.transform;
-				this.IS.children[1].style['transform'] = animation.transform;
-			}, 0);
-		});
+		}));
 		
 
 		function doGetSection(children, id, fallback) {
@@ -81,24 +77,31 @@ class IS extends Component {
 	}
 
 	componentDidUpdate() {
-		if (!this.state.previous) {
-			this.IS.children[0].style['transition'] = `none`;
-			this.IS.children[0].style['transform'] = `translate3d(0, 0, 0)`;
-		}
-
-		if (this.state.previous && this.state.current && this.state.animation && this.state.animation.flip) {
-			for (let i = 0; i < this.IS.children.length; i++) {
+		if (this.state.animation) {
+			if (!this.state.previous) {
 				this.IS.children[0].style['transition'] = `none`;
-				this.IS.children[i].style['transform'] = 'translate3d(-100%, 0, 0)';
+				this.IS.children[0].style['transform'] = `translate3d(0, 0, 0)`;
+			}
+
+			if (this.state.previous && this.state.current) {
+				for (let i = 0; i < this.IS.children.length; i++) {
+					if (this.state.animation && this.state.animation.flip) {
+						this.IS.children[i].style['transform'] = 'translate3d(-100%, 0, 0)';
+					}
+
+					onNextFrame(() => {
+						this.IS.children[i].style['transition'] = `all ${this.state.animation.duration}ms ease`;
+						this.IS.children[i].style['transform'] = this.state.animation.transform;
+					});
+				}
 			}
 		}
 		
 		this.timeoutId = setTimeout(() => {
 			this.setState(Object.assign({}, this.state, {
-				previous: null,
-				animate: false
+				previous: null
 			}));
-		}, 500);
+		}, this.state.animation ? this.state.animation.duration : 0);
 	}
 
 	render() { 
@@ -140,4 +143,10 @@ class Dispatcher {
 			this.callback(section, id, animation);
 		}
 	}
+}
+
+function onNextFrame(callback) {
+    setTimeout(() => {
+        window.requestAnimationFrame(callback);
+    }, 20);
 }
