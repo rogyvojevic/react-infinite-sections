@@ -11,8 +11,6 @@ var HtmlWebpackPluginConfig = new HtmlWebpackPlugin({
 module.exports = {
 	devtool: 'source-maps',
 	entry: [
-		'webpack-dev-server/client?http://localhost:3000',
-		'webpack/hot/only-dev-server',
 		path.join(__dirname, 'example/main.js')
 	],
 	output: {
@@ -22,6 +20,7 @@ module.exports = {
 	devServer: {
 		contentBase: path.join(__dirname, 'dist'),
 		historyApiFallback: true,
+		host: '192.168.2.104',
 		port: 3000,
 		colors: true,
 		open: true

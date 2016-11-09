@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import ReactDOM from 'react-dom';
 
 export default class InfiniteSections extends Component {
 	constructor(props) {
@@ -31,7 +30,7 @@ class IS extends Component {
 		};
 		this.timeoutId = null;
 
-		this.props.dispatcher.register((section, id, animation) => {
+		this.props.dispatcher.register((section, id, animation) => {			
 			this.getSectionElement(section, id, animation);
 		});
 
@@ -48,7 +47,15 @@ class IS extends Component {
 		if (section === 'root') {
 			sectionElement = this.state.config.root;
 		} else {
-			sectionElement = doGetSection(this.state.config.sections[section], id, this.state.current);
+			if (this.state.config.sections) {
+				if (this.state.config.sections[section] && id) {
+					sectionElement = doGetSection(this.state.config.sections[section], id, this.state.current);
+				} else {
+					throw new Error(`Trying to access sections['${section}']' with id ${id}`);
+				}
+			} else {
+				throw new Error(`Missing sections object`);
+			}
 		}
 
 		clearTimeout(this.timeoutId);
@@ -78,11 +85,13 @@ class IS extends Component {
 
 	componentDidUpdate() {
 		if (this.state.animation) {
+			// Reset current component to original position
 			if (!this.state.previous) {
 				this.IS.children[0].style['transition'] = `none`;
 				this.IS.children[0].style['transform'] = `translate3d(0, 0, 0)`;
 			}
 
+			// Animation logic
 			if (this.state.previous && this.state.current) {
 				for (let i = 0; i < this.IS.children.length; i++) {
 					if (this.state.animation && this.state.animation.flip) {
@@ -97,6 +106,8 @@ class IS extends Component {
 			}
 		}
 		
+		// If animation is enabled this function will
+		// execute after the animation is done
 		this.timeoutId = setTimeout(() => {
 			this.setState(Object.assign({}, this.state, {
 				previous: null
@@ -108,18 +119,36 @@ class IS extends Component {
 		let previous = this.state.previous && this.state.previous.component;
 		let current = this.state.current.component;
 		let content = null;
+		
+		let wrapperStyle = {
+			overflow: 'visible',
+			whiteSpace: 'nowrap',
+			overflow: 'hidden',
+			width: '100%',
+			height: '100%'
+		};
 
-		if (this.state.animation && this.state.animation.flip) {
-			content = (
-				<div style={{overflow: 'visible', whiteSpace: 'nowrap', overflow: 'hidden'}} ref={ref => this.IS = ref}>
-					{current}
-					{previous}
-				</div>
-			);
+		// Checking if animation is enabled
+		if (this.state.animation) {
+			// Checking if navigatining to parent (flip)
+			if (this.state.animation.flip) {
+				content = (
+					<div style={wrapperStyle} ref={ref => this.IS = ref}>
+						{current}
+						{previous}
+					</div>
+				);
+			} else {
+				content = (
+					<div style={wrapperStyle} ref={ref => this.IS = ref}>
+						{previous}
+						{current}
+					</div>
+				);
+			}
 		} else {
 			content = (
-				<div style={{overflow: 'visible', whiteSpace: 'nowrap', overflow: 'hidden'}} ref={ref => this.IS = ref}>
-					{previous}
+				<div style={wrapperStyle} ref={ref => this.IS = ref}>
 					{current}
 				</div>
 			);

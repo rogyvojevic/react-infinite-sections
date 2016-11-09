@@ -1,15 +1,8 @@
-React skeletons
-===============
+Infinite Sections
+=================
 
-If you need to start with React project quickly.
-It supports hot reload on CSS and JS while CSS files are extracted.  
+Create navigation through sections + animation!
 
 ```
-git clone git@github.com:rogyvoje/react-webpack-skeleton.git
-npm install
-npm start
+npm install react-infinite-sections --save
 ```
-
-The idea of this package is to evolve in more skeletons in different branches.
-
-Stay tuned...
