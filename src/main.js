@@ -1,15 +1,23 @@
 import React, {Component} from 'react';
+import ReactDOM from 'react-dom';
 
-export default function InfiniteSections(config) {
-	let dispatcher = new Dispatcher();
+export default class InfiniteSections extends Component {
+	constructor(props) {
+		super(props);
 
-	function getReactComponent() {
-		return React.createElement(IS, {dispatcher, config: config(dispatcher.dispatch.bind(dispatcher))});
+		this.dispatcher = new Dispatcher();
 	}
 
-	return {
-		getReactComponent
-	};
+	render() {
+		let {config} = this.props;
+
+		return (
+			<IS
+				dispatcher={this.dispatcher}
+				config={config(this.dispatcher.dispatch.bind(this.dispatcher))}
+			/>
+		);
+	}
 }
 
 class IS extends Component {
@@ -18,28 +26,41 @@ class IS extends Component {
 
 		this.state = {
 			...props,
-			current: null
+			previous: null,
+			current: null,
 		};
+		this.timeoutId = null;
 
-		this.props.dispatcher.register((section, id) => {
-			this.getSection(section, id);
+		this.props.dispatcher.register((section, id, animation) => {
+			this.getSectionElement(section, id, animation);
 		});
 
 		this.state.current = this.state.config.root;
 	}
 
-	getSection(section, id) {		
-		let newSection = null;
+	getSectionElement(section, id, animation) {		
+		let sectionElement = null;
 
 		if (section === 'root') {
-			newSection = this.state.config.root;
+			sectionElement = this.state.config.root;
 		} else {
-			newSection = doGetSection(this.state.config.components[section], id, this.state.current);
+			sectionElement = doGetSection(this.state.config.sections[section], id, this.state.current);
 		}
 
+		clearTimeout(this.timeoutId);
 		this.setState(Object.assign({}, this.state, {
-			current: newSection
-		}));
+			previous: this.state.current,
+			current: sectionElement,
+			animate: true,
+			animation
+		}), () => {
+			setTimeout(() => {
+				this.IS.children[0].style['transition'] = animation.transition;
+				this.IS.children[1].style['transition'] = animation.transition;
+				this.IS.children[0].style['transform'] = animation.transform;
+				this.IS.children[1].style['transform'] = animation.transform;
+			}, 0);
+		});
 		
 
 		function doGetSection(children, id, fallback) {
@@ -55,9 +76,53 @@ class IS extends Component {
 		}
 	}
 
-	render() {
-		let component = this.state.current.component;
-		return (component);
+	shouldComponentUpdate(nextProps, nextState) {
+		return this.state.previous || nextState.previous;
+	}
+
+	componentDidUpdate() {
+		if (!this.state.previous) {
+			this.IS.children[0].style['transition'] = `none`;
+			this.IS.children[0].style['transform'] = `translate3d(0, 0, 0)`;
+		}
+
+		if (this.state.previous && this.state.current && this.state.animation && this.state.animation.flip) {
+			for (let i = 0; i < this.IS.children.length; i++) {
+				this.IS.children[0].style['transition'] = `none`;
+				this.IS.children[i].style['transform'] = 'translate3d(-100%, 0, 0)';
+			}
+		}
+		
+		this.timeoutId = setTimeout(() => {
+			this.setState(Object.assign({}, this.state, {
+				previous: null,
+				animate: false
+			}));
+		}, 500);
+	}
+
+	render() { 
+		let previous = this.state.previous && this.state.previous.component;
+		let current = this.state.current.component;
+		let content = null;
+
+		if (this.state.animation && this.state.animation.flip) {
+			content = (
+				<div style={{overflow: 'visible', whiteSpace: 'nowrap', overflow: 'hidden'}} ref={ref => this.IS = ref}>
+					{current}
+					{previous}
+				</div>
+			);
+		} else {
+			content = (
+				<div style={{overflow: 'visible', whiteSpace: 'nowrap', overflow: 'hidden'}} ref={ref => this.IS = ref}>
+					{previous}
+					{current}
+				</div>
+			);
+		}
+
+		return (content);
 	}
 }
 
@@ -70,9 +135,9 @@ class Dispatcher {
 		this.callback = callback;
 	}
 
-	dispatch(section, id) {
+	dispatch(section, id, animation) {
 		return () => {
-			this.callback(section, id);
+			this.callback(section, id, animation);
 		}
 	}
 }
