@@ -1,5 +1,21 @@
 import React, {Component} from 'react';
 
+const classes = {
+	startPrevious: 'is-start__previous',
+	startCurrent: 'is-start__current',
+
+	animatePrevious: 'is-animate__previous',
+	animateCurrent: 'is-animate__current',
+
+	startPreviousInverse: 'is-start__previous--inverse',
+	startCurrentInverse: 'is-start__current--inverse',
+
+	animatePreviousInverse: 'is-animate__previous--inverse',
+	animateCurrentInverse: 'is-animate__current--inverse',
+
+	end: 'is-end'
+};
+
 export default class InfiniteSections extends Component {
 	constructor(props) {
 		super(props);
@@ -8,16 +24,31 @@ export default class InfiniteSections extends Component {
 	}
 
 	render() {
-		let {config} = this.props;
+		let {style, className, config, animate, onStart, onDone} = this.props;
+		let disableNavigationWhileAnimating = true;
+
+		if (this.props.disableNavigationWhileAnimating === false) {
+			disableNavigationWhileAnimating = false;
+		}
 
 		return (
 			<IS
+				className={className}
+				style={style}
 				dispatcher={this.dispatcher}
+				animate={animate}
+				disableNavigationWhileAnimating={disableNavigationWhileAnimating}
+				onStart={isFunction(onStart) ? onStart : null}
+				onDone={isFunction(onDone) ? onDone : null}
 				config={config(this.dispatcher.dispatch.bind(this.dispatcher))}
 			/>
 		);
 	}
 }
+
+InfiniteSections.propTypes = {
+	config: React.PropTypes.func.isRequired
+};
 
 class IS extends Component {
 	constructor(props) {
@@ -28,28 +59,34 @@ class IS extends Component {
 			previous: null,
 			current: null
 		};
+
+		this.isAnimating = false;
 		this.timeoutId = null;
-
-		this.props.dispatcher.register((section, id, animation) => {			
-			this.getSectionElement(section, id, animation);
-		});
-
+		this.inverse = null;
 		this.state.current = this.state.config.root;
+
+		this.previousData = null;
+		this.currentData = { section: 'root'};
+
+		this.props.dispatcher.register((section, id, inverse) => {
+			if (this.isAnimating && this.props.disableNavigationWhileAnimating) {
+				return;	
+			}
+
+			this.inverse = inverse;
+			this.updateState(section, id);
+		});
 	}
 
-	getSectionElement(section, id, animation) {		
-		let sectionElement = null;
-
-		if (!animation || !animation.duration || !animation.transform) {
-			animation = false;
-		}
+	updateState(section, id) {		
+		let current = null;
 
 		if (section === 'root') {
-			sectionElement = this.state.config.root;
+			current = this.state.config.root;
 		} else {
 			if (this.state.config.sections) {
 				if (this.state.config.sections[section] && id) {
-					sectionElement = doGetSection(this.state.config.sections[section], id, this.state.current);
+					current = getCurrent(this.state.config.sections[section], id, this.state.current);
 				} else {
 					throw new Error(`Trying to access sections['${section}']' with id ${id}`);
 				}
@@ -59,14 +96,22 @@ class IS extends Component {
 		}
 
 		clearTimeout(this.timeoutId);
+
+		if (this.props.onStart) {
+			this.previousData = { section: this.currentData.section, id: this.currentData.id };
+			this.currentData = { section, id }
+
+			this.props.onStart(this.previousData, this.currentData);
+		}
+
+		
 		this.setState(Object.assign({}, this.state, {
 			previous: this.state.current,
-			current: sectionElement,
-			animation
+			current
 		}));
 		
 
-		function doGetSection(children, id, fallback) {
+		function getCurrent(children, id, fallback) {
 			let result = fallback;
 
 			children.forEach(child => {
@@ -84,79 +129,102 @@ class IS extends Component {
 	}
 
 	componentDidUpdate() {
-		if (this.state.animation) {
-			// Reset current component to original position
-			if (!this.state.previous) {
-				this.IS.children[0].style['transition'] = `none`;
-				this.IS.children[0].style['transform'] = `translate3d(0, 0, 0)`;
-			}
+		if (this.props.animate && this.previousElement && this.currentElement) {
 
-			// Animation logic
-			if (this.state.previous && this.state.current) {
-				for (let i = 0; i < this.IS.children.length; i++) {
-					if (this.state.animation && this.state.animation.flip) {
-						this.IS.children[i].style['transform'] = 'translate3d(-100%, 0, 0)';
-					}
+			removeClasses(this.previousElement, Object.keys(classes).map(key => classes[key]));
+			removeClasses(this.currentElement, Object.keys(classes).map(key => classes[key]));
 
-					onNextFrame(() => {
-						this.IS.children[i].style['transition'] = `all ${this.state.animation.duration}ms ease`;
-						this.IS.children[i].style['transform'] = this.state.animation.transform;
-					});
-				}
+			if (this.inverse) {
+				let {startPreviousInverse, startCurrentInverse, animatePreviousInverse, animateCurrentInverse} = classes; 
+
+				addClasses(this.previousElement, [startPreviousInverse, animatePreviousInverse]);
+				addClasses(this.currentElement, [startCurrentInverse, animateCurrentInverse]);
+				
+			} else {
+				let {startPrevious, startCurrent, animatePrevious, animateCurrent} = classes;
+				
+				addClasses(this.previousElement, [startPrevious, animatePrevious]);
+				addClasses(this.currentElement, [startCurrent, animateCurrent]);
 			}
+		}
+
+		if (!this.state.previous && this.state.current) {
+			this.props.onDone && this.props.onDone(this.previousData, this.currentData);
 		}
 		
 		// If animation is enabled this function will
 		// execute after the animation is done
+		this.isAnimating = true;
 		this.timeoutId = setTimeout(() => {
 			this.setState(Object.assign({}, this.state, {
 				previous: null
 			}));
-		}, this.state.animation ? this.state.animation.duration : 0);
+			this.isAnimating = false;
+		}, getLongerDuration(this.previousElement, this.currentElement));
 	}
 
 	render() { 
+		let { style, className, animate } = this.props;
 		let previous = this.state.previous && this.state.previous.component;
 		let current = this.state.current.component;
 		let content = null;
-		
-		let wrapperStyle = {
-			overflow: 'visible',
-			whiteSpace: 'nowrap',
-			overflow: 'hidden',
-			width: '100%',
-			height: '100%'
-		};
 
-		// Checking if animation is enabled
-		if (this.state.animation) {
-			// Checking if navigatining to parent (flip)
-			if (this.state.animation.flip) {
-				content = (
-					<div style={wrapperStyle} ref={ref => this.IS = ref}>
-						{current}
-						{previous}
-					</div>
-				);
-			} else {
-				content = (
-					<div style={wrapperStyle} ref={ref => this.IS = ref}>
-						{previous}
-						{current}
-					</div>
-				);
-			}
-		} else {
+		if (animate && previous) {			
+			previous = React.cloneElement(previous, { ref: ref => { this.previousElement = ref }, key: 1 });
+			current = React.cloneElement(current, { ref: ref => { this.currentElement = ref }, key: 2 });
+
 			content = (
-				<div style={wrapperStyle} ref={ref => this.IS = ref}>
+				<div className={className} style={style} ref={ref => this.IS = ref}>
+					{previous}
+					{current}
+				</div>
+			);
+
+		} else {
+			current = React.cloneElement(current, { ref: ref => { this.currentElement = ref }, className: `${current.props.className} ${classes.end}`, key: 1 });
+
+			content = (
+				<div className={className} style={style} ref={ref => this.IS = ref}>
 					{current}
 				</div>
 			);
 		}
-
+				
 		return (content);
 	}
 }
+
+IS.propTypes = {
+	config: React.PropTypes.shape({
+		root: React.PropTypes.shape({
+			id: React.PropTypes.string.isRequired,
+			component: React.PropTypes.element.isRequired,
+		}),
+		sections: React.PropTypes.objectOf((propValue, key, componentName, location, propFullName) => {
+			let fail = false;
+			let failDescription = null;
+
+			if ((propValue[key].constructor === Array) && propValue[key].length) {
+				propValue[key].forEach((section) => {
+					if (!section.id) {
+						fail = true;
+						failDescription = 'Missing id.'
+					} else if (!section.component && !React.isValidElement(section.component)) {
+						failDescription = 'Missing component.'
+					}
+				});
+			} else {
+				fail = true;
+			}
+
+			if (fail) {
+				return new Error(
+					`Invalid prop ${propFullName} supplied to ${componentName}. ${failDescription} Validation failed.`
+				);
+			}
+		}),
+	})
+};
 
 class Dispatcher {
 	constructor() {
@@ -167,15 +235,53 @@ class Dispatcher {
 		this.callback = callback;
 	}
 
-	dispatch(section, id, animation) {
+	dispatch(section, id, inverse) {
 		return () => {
-			this.callback(section, id, animation);
+			this.callback(section, id, !!inverse);
 		}
 	}
 }
 
-function onNextFrame(callback) {
-    setTimeout(() => {
-        window.requestAnimationFrame(callback);
-    }, 20);
+function addClasses(element, classNames) {
+	classNames.forEach(className => {
+		element.clientHeight;
+		element.classList.add(className);
+	});
+}
+
+function removeClasses(element, classNames) {
+	classNames.forEach(className => {
+		element.clientHeight;
+		element.classList.remove(className);
+	});
+}
+
+function getLongerDuration(element_1, element_2) {
+	let elem_1_duration = getElementDuration(element_1);
+	let elem_2_duration = getElementDuration(element_2);
+
+	return elem_1_duration > elem_2_duration ? elem_1_duration : elem_2_duration;
+}
+
+function getElementDuration(element) {
+	let duration = 0;
+	let possibleMatch;
+
+	if (element) {
+		possibleMatch = getComputedStyle(element)['transition-duration'].match(/([0-9]*\.[0-9]+|[0-9]+)(ms|s)/i);
+
+		if (possibleMatch[1] && possibleMatch[2]) {
+			if (possibleMatch[2].toLowerCase() === 's') {
+				duration = parseFloat(possibleMatch[1]) * 1000;
+			} else {
+				duration = possibleMatch[1];
+			}
+		}
+	}
+
+	return duration;
+}
+
+function isFunction(object) {
+	return !!(object && object.constructor && object.call && object.apply);
 }

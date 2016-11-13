@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 
 import { Root, Root_ChildLeft, Root_ChildRight, Root_ChildLeft_Child, Root_ChildRight_Child } from './components';
 import InfiniteSections from '../src/main.js';
+
+import './css/main.scss';
 
 let is = (
     <InfiniteSections
@@ -43,22 +45,13 @@ let is = (
 
 // Basic example no animations
 
-const wrapper = {
-    backgroundColor: '#607D8B',
-    width: '100%',
-    height: '100%',
-    display: 'inline-block',
-    position: 'relative',
-    verticalAlign: 'top',
-};
-
 const header = {
     width: '100%',
     height: '5%',
     backgroundColor: '#263238',
     color: '#ECEFF1',
-    fontSize: '25px',
-    lineHeight: '45px',
+    fontSize: '20px',
+    lineHeight: '20px',
     padding: '0 10px',
     boxSizing: 'border-box'
 }
@@ -66,7 +59,7 @@ const header = {
 const list = {
     margin: '10px',
     padding: '5px 10px',
-    fontSize: '20px',
+    fontSize: '17px',
     backgroundColor: '#ECEFF1',
     listStyleType: 'none',
     boxSizing: 'border-box'
@@ -81,28 +74,21 @@ const fontSettingsContent = {
     boxSizing: 'border-box'
 };
 
-const animationNext = {
-    transform: 'translate3d(-100%, 0, 0)',
-    duration: 500
-};
-
-const animationBack = {
-    flip: true,
-    duration: 500,
-    transform: 'translate3d(0, 0, 0)'
-};
-
 let settings = (
     <InfiniteSections
+		className="settings-wrapper"
+		animate={true}
+		onStart={(previous, current) => console.log(`start: ${previous.section} - ${current.section}`)}
+		onDone={(previous, current) => console.log(`done: ${previous.section} - ${current.section}`)}
         config={dispatch => {
             return {
                 root: {
                     id: 'root',
                     component: (
-                        <div style={wrapper}>
+                        <div className="wrapper">
                             <div style={header}>Settings</div>
                             <ul style={list}>
-                                <li style={link} onClick={dispatch('settings', 'font', animationNext)}>Font</li>
+                                <li style={link} onClick={dispatch('settings', 'font')}>Font</li>
                             </ul>
                         </div>
                     )
@@ -112,8 +98,8 @@ let settings = (
                         {
                             id: 'font',
                             component: (
-                                <div style={wrapper}>
-                                    <div style={{...link, ...header}} onClick={dispatch('root', null, animationBack)}>Back</div>
+                                <div className="wrapper">
+                                    <div style={{...link, ...header}} onClick={dispatch('root', null, true)}>Back</div>
                                     <div style={fontSettingsContent}>All options for font...</div>
                                 </div>
                             )
@@ -125,4 +111,18 @@ let settings = (
     />
 );
 
-ReactDOM.render(settings, document.getElementById('app'));
+class App extends Component {
+	constructor(props) {
+		super(props);
+	}
+
+	render() {
+		return (
+			<div>
+				{settings}
+			</div>
+		);
+	}
+}
+
+ReactDOM.render(<App />, document.getElementById('app'));
