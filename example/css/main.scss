@@ -4,7 +4,36 @@
 	overflow: hidden;
 }
 
-.wrapper {
+.header {
+	width: 100%;
+    height: 5%;
+    background-color: #263238;
+    color: #ECEFF1;
+    font-size: 5vh;
+    line-height: 5vh;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.list {
+	margin: 10px;
+    padding: 5px 10px;
+    font-size: 3.5vh;
+    background-color: #ECEFF1;
+    list-style-type: none;
+    box-sizing: border-box;
+}
+
+.link {
+	cursor: pointer;
+}
+
+.font-settings-content {
+	padding: 20px;
+    box-sizing: border-box;
+}
+
+.section-wrapper {
 	position: absolute;
 	width: 100%;
 	height: 100%;

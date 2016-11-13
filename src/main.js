@@ -24,7 +24,7 @@ export default class InfiniteSections extends Component {
 	}
 
 	render() {
-		let {style, className, config, animate, onStart, onDone} = this.props;
+		let {style, className, sections, root, animate, onStart, onDone} = this.props;
 		let disableNavigationWhileAnimating = true;
 
 		if (this.props.disableNavigationWhileAnimating === false) {
@@ -40,14 +40,19 @@ export default class InfiniteSections extends Component {
 				disableNavigationWhileAnimating={disableNavigationWhileAnimating}
 				onStart={isFunction(onStart) ? onStart : null}
 				onDone={isFunction(onDone) ? onDone : null}
-				config={config(this.dispatcher.dispatch.bind(this.dispatcher))}
+				root={root}
+				sections={sections(this.dispatcher.dispatch.bind(this.dispatcher))}
 			/>
 		);
 	}
 }
 
 InfiniteSections.propTypes = {
-	config: React.PropTypes.func.isRequired
+	root: React.PropTypes.shape({
+		section: React.PropTypes.string.isRequired,
+		id: React.PropTypes.string.isRequired
+	}),
+	sections: React.PropTypes.func.isRequired
 };
 
 class IS extends Component {
@@ -63,10 +68,10 @@ class IS extends Component {
 		this.isAnimating = false;
 		this.timeoutId = null;
 		this.inverse = null;
-		this.state.current = this.state.config.root;
+		this.state.current = getCurrent(this.state.sections[this.props.root.section], this.props.root.id);
 
 		this.previousData = null;
-		this.currentData = { section: 'root'};
+		this.currentData = this.props.root;
 
 		this.props.dispatcher.register((section, id, inverse) => {
 			if (this.isAnimating && this.props.disableNavigationWhileAnimating) {
@@ -81,20 +86,16 @@ class IS extends Component {
 	updateState(section, id) {		
 		let current = null;
 
-		if (section === 'root') {
-			current = this.state.config.root;
-		} else {
-			if (this.state.config.sections) {
-				if (this.state.config.sections[section] && id) {
-					current = getCurrent(this.state.config.sections[section], id, this.state.current);
-				} else {
-					throw new Error(`Trying to access sections['${section}']' with id ${id}`);
-				}
+		if (this.state.sections) {
+			if (this.state.sections[section] && id) {
+				current = getCurrent(this.state.sections[section], id, this.state.current);
 			} else {
-				throw new Error(`Missing sections object`);
+				throw new Error(`Trying to access sections['${section}']' with id ${id}`);
 			}
+		} else {
+			throw new Error(`Missing sections object`);
 		}
-
+		
 		clearTimeout(this.timeoutId);
 
 		if (this.props.onStart) {
@@ -109,19 +110,6 @@ class IS extends Component {
 			previous: this.state.current,
 			current
 		}));
-		
-
-		function getCurrent(children, id, fallback) {
-			let result = fallback;
-
-			children.forEach(child => {
-				if (child.id === id) {
-					result = child;
-				}
-			});
-
-			return result;
-		}
 	}
 
 	shouldComponentUpdate(nextProps, nextState) {
@@ -152,8 +140,6 @@ class IS extends Component {
 			this.props.onDone && this.props.onDone(this.previousData, this.currentData);
 		}
 		
-		// If animation is enabled this function will
-		// execute after the animation is done
 		this.isAnimating = true;
 		this.timeoutId = setTimeout(() => {
 			this.setState(Object.assign({}, this.state, {
@@ -195,34 +181,28 @@ class IS extends Component {
 }
 
 IS.propTypes = {
-	config: React.PropTypes.shape({
-		root: React.PropTypes.shape({
-			id: React.PropTypes.string.isRequired,
-			component: React.PropTypes.element.isRequired,
-		}),
-		sections: React.PropTypes.objectOf((propValue, key, componentName, location, propFullName) => {
-			let fail = false;
-			let failDescription = null;
+	sections: React.PropTypes.objectOf((propValue, key, componentName, location, propFullName) => {
+		let fail = false;
+		let failDescription = null;
 
-			if ((propValue[key].constructor === Array) && propValue[key].length) {
-				propValue[key].forEach((section) => {
-					if (!section.id) {
-						fail = true;
-						failDescription = 'Missing id.'
-					} else if (!section.component && !React.isValidElement(section.component)) {
-						failDescription = 'Missing component.'
-					}
-				});
-			} else {
-				fail = true;
-			}
+		if ((propValue[key].constructor === Array) && propValue[key].length) {
+			propValue[key].forEach((section) => {
+				if (!section.id) {
+					fail = true;
+					failDescription = 'Missing id.'
+				} else if (!section.component && !React.isValidElement(section.component)) {
+					failDescription = 'Missing component.'
+				}
+			});
+		} else {
+			fail = true;
+		}
 
-			if (fail) {
-				return new Error(
-					`Invalid prop ${propFullName} supplied to ${componentName}. ${failDescription} Validation failed.`
-				);
-			}
-		}),
+		if (fail) {
+			return new Error(
+				`Invalid prop ${propFullName} supplied to ${componentName}. ${failDescription} Validation failed.`
+			);
+		}
 	})
 };
 
@@ -251,7 +231,6 @@ function addClasses(element, classNames) {
 
 function removeClasses(element, classNames) {
 	classNames.forEach(className => {
-		element.clientHeight;
 		element.classList.remove(className);
 	});
 }
@@ -284,4 +263,16 @@ function getElementDuration(element) {
 
 function isFunction(object) {
 	return !!(object && object.constructor && object.call && object.apply);
+}
+
+function getCurrent(children, id, fallback = null) {
+	let result = fallback;
+
+	children.forEach(child => {
+		if (child.id === id) {
+			result = child;
+		}
+	});
+
+	return result;
 }
