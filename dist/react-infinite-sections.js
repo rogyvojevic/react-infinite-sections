@@ -14,13 +14,27 @@ var _react2 = _interopRequireDefault(_react);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var classes = {
+	startPrevious: 'is-start__previous',
+	startCurrent: 'is-start__current',
+
+	animatePrevious: 'is-animate__previous',
+	animateCurrent: 'is-animate__current',
+
+	startPreviousInverse: 'is-start__previous--inverse',
+	startCurrentInverse: 'is-start__current--inverse',
+
+	animatePreviousInverse: 'is-animate__previous--inverse',
+	animateCurrentInverse: 'is-animate__current--inverse',
+
+	end: 'is-end'
+};
 
 var InfiniteSections = function (_Component) {
 	_inherits(InfiniteSections, _Component);
@@ -37,12 +51,31 @@ var InfiniteSections = function (_Component) {
 	_createClass(InfiniteSections, [{
 		key: 'render',
 		value: function render() {
-			var config = this.props.config;
+			var _props = this.props,
+			    style = _props.style,
+			    className = _props.className,
+			    sections = _props.sections,
+			    root = _props.root,
+			    animate = _props.animate,
+			    onStart = _props.onStart,
+			    onDone = _props.onDone;
 
+			var disableNavigationWhileAnimating = true;
+
+			if (this.props.disableNavigationWhileAnimating === false) {
+				disableNavigationWhileAnimating = false;
+			}
 
 			return _react2.default.createElement(IS, {
+				className: className,
+				style: style,
 				dispatcher: this.dispatcher,
-				config: config(this.dispatcher.dispatch.bind(this.dispatcher))
+				animate: animate,
+				disableNavigationWhileAnimating: disableNavigationWhileAnimating,
+				onStart: isFunction(onStart) ? onStart : null,
+				onDone: isFunction(onDone) ? onDone : null,
+				root: root,
+				sections: sections(this.dispatcher.dispatch.bind(this.dispatcher))
 			});
 		}
 	}]);
@@ -51,6 +84,15 @@ var InfiniteSections = function (_Component) {
 }(_react.Component);
 
 exports.default = InfiniteSections;
+
+
+InfiniteSections.propTypes = {
+	root: _react2.default.PropTypes.shape({
+		section: _react2.default.PropTypes.string.isRequired,
+		id: _react2.default.PropTypes.string.isRequired
+	}),
+	sections: _react2.default.PropTypes.func.isRequired
+};
 
 var IS = function (_Component2) {
 	_inherits(IS, _Component2);
@@ -64,57 +106,54 @@ var IS = function (_Component2) {
 			previous: null,
 			current: null
 		});
+
+		_this2.isAnimating = false;
 		_this2.timeoutId = null;
+		_this2.inverse = null;
+		_this2.state.current = getCurrent(_this2.state.sections[_this2.props.root.section], _this2.props.root.id);
 
-		_this2.props.dispatcher.register(function (section, id, animation) {
-			_this2.getSectionElement(section, id, animation);
+		_this2.previousData = null;
+		_this2.currentData = _this2.props.root;
+
+		_this2.props.dispatcher.register(function (section, id, inverse) {
+			if (_this2.isAnimating && _this2.props.disableNavigationWhileAnimating) {
+				return;
+			}
+
+			_this2.inverse = inverse;
+			_this2.updateState(section, id);
 		});
-
-		_this2.state.current = _this2.state.config.root;
 		return _this2;
 	}
 
 	_createClass(IS, [{
-		key: 'getSectionElement',
-		value: function getSectionElement(section, id, animation) {
-			var sectionElement = null;
+		key: 'updateState',
+		value: function updateState(section, id) {
+			var current = null;
 
-			if (!animation || !animation.duration || !animation.transform) {
-				animation = false;
-			}
-
-			if (section === 'root') {
-				sectionElement = this.state.config.root;
-			} else {
-				if (this.state.config.sections) {
-					if (this.state.config.sections[section] && id) {
-						sectionElement = doGetSection(this.state.config.sections[section], id, this.state.current);
-					} else {
-						throw new Error('Trying to access sections[\'' + section + '\']\' with id ' + id);
-					}
+			if (this.state.sections) {
+				if (this.state.sections[section] && id) {
+					current = getCurrent(this.state.sections[section], id, this.state.current);
 				} else {
-					throw new Error('Missing sections object');
+					throw new Error('Trying to access sections[\'' + section + '\']\' with id ' + id);
 				}
+			} else {
+				throw new Error('Missing sections object');
 			}
 
 			clearTimeout(this.timeoutId);
+
+			if (this.props.onStart) {
+				this.previousData = { section: this.currentData.section, id: this.currentData.id };
+				this.currentData = { section: section, id: id };
+
+				this.props.onStart(this.previousData, this.currentData);
+			}
+
 			this.setState(_extends({}, this.state, {
 				previous: this.state.current,
-				current: sectionElement,
-				animation: animation
+				current: current
 			}));
-
-			function doGetSection(children, id, fallback) {
-				var result = fallback;
-
-				children.forEach(function (child) {
-					if (child.id === id) {
-						result = child;
-					}
-				});
-
-				return result;
-			}
 		}
 	}, {
 		key: 'shouldComponentUpdate',
@@ -126,76 +165,87 @@ var IS = function (_Component2) {
 		value: function componentDidUpdate() {
 			var _this3 = this;
 
-			if (this.state.animation) {
-				// Reset current component to original position
-				if (!this.state.previous) {
-					this.IS.children[0].style['transition'] = 'none';
-					this.IS.children[0].style['transform'] = 'translate3d(0, 0, 0)';
-				}
+			if (this.props.animate && this.previousElement && this.currentElement) {
 
-				// Animation logic
-				if (this.state.previous && this.state.current) {
-					var _loop = function _loop(i) {
-						if (_this3.state.animation && _this3.state.animation.flip) {
-							_this3.IS.children[i].style['transform'] = 'translate3d(-100%, 0, 0)';
-						}
+				removeClasses(this.previousElement, Object.keys(classes).map(function (key) {
+					return classes[key];
+				}));
+				removeClasses(this.currentElement, Object.keys(classes).map(function (key) {
+					return classes[key];
+				}));
 
-						onNextFrame(function () {
-							_this3.IS.children[i].style['transition'] = 'all ' + _this3.state.animation.duration + 'ms ease';
-							_this3.IS.children[i].style['transform'] = _this3.state.animation.transform;
-						});
-					};
+				if (this.inverse) {
+					var startPreviousInverse = classes.startPreviousInverse,
+					    startCurrentInverse = classes.startCurrentInverse,
+					    animatePreviousInverse = classes.animatePreviousInverse,
+					    animateCurrentInverse = classes.animateCurrentInverse;
 
-					for (var i = 0; i < this.IS.children.length; i++) {
-						_loop(i);
-					}
+
+					addClasses(this.previousElement, [startPreviousInverse, animatePreviousInverse]);
+					addClasses(this.currentElement, [startCurrentInverse, animateCurrentInverse]);
+				} else {
+					var startPrevious = classes.startPrevious,
+					    startCurrent = classes.startCurrent,
+					    animatePrevious = classes.animatePrevious,
+					    animateCurrent = classes.animateCurrent;
+
+
+					addClasses(this.previousElement, [startPrevious, animatePrevious]);
+					addClasses(this.currentElement, [startCurrent, animateCurrent]);
 				}
 			}
 
-			// If animation is enabled this function will
-			// execute after the animation is done
+			if (!this.state.previous && this.state.current) {
+				this.props.onDone && this.props.onDone(this.previousData, this.currentData);
+			}
+
+			this.isAnimating = true;
 			this.timeoutId = setTimeout(function () {
 				_this3.setState(_extends({}, _this3.state, {
 					previous: null
 				}));
-			}, this.state.animation ? this.state.animation.duration : 0);
+				_this3.isAnimating = false;
+			}, getLongerDuration(this.previousElement, this.currentElement));
 		}
 	}, {
 		key: 'render',
 		value: function render() {
 			var _this4 = this;
 
+			var _props2 = this.props,
+			    style = _props2.style,
+			    className = _props2.className,
+			    animate = _props2.animate;
+
 			var previous = this.state.previous && this.state.previous.component;
 			var current = this.state.current.component;
 			var content = null;
 
-			// Checking if animation is enabled
-			if (this.state.animation) {
-				// Checking if navigatining to parent (flip)
-				if (this.state.animation.flip) {
-					content = _react2.default.createElement(
-						'div',
-						{ style: _defineProperty({ overflow: 'visible', whiteSpace: 'nowrap' }, 'overflow', 'hidden'), ref: function ref(_ref2) {
-								return _this4.IS = _ref2;
-							} },
-						current,
-						previous
-					);
-				} else {
-					content = _react2.default.createElement(
-						'div',
-						{ style: _defineProperty({ overflow: 'visible', whiteSpace: 'nowrap' }, 'overflow', 'hidden'), ref: function ref(_ref4) {
-								return _this4.IS = _ref4;
-							} },
-						previous,
-						current
-					);
-				}
-			} else {
+			if (animate && previous) {
+				previous = _react2.default.cloneElement(previous, { ref: function ref(_ref) {
+						_this4.previousElement = _ref;
+					}, key: 1 });
+				current = _react2.default.cloneElement(current, { ref: function ref(_ref2) {
+						_this4.currentElement = _ref2;
+					}, key: 2 });
+
 				content = _react2.default.createElement(
 					'div',
-					{ style: _defineProperty({ overflow: 'visible', whiteSpace: 'nowrap' }, 'overflow', 'hidden'), ref: function ref(_ref6) {
-							return _this4.IS = _ref6;
+					{ className: className, style: style, ref: function ref(_ref3) {
+							return _this4.IS = _ref3;
+						} },
+					previous,
+					current
+				);
+			} else {
+				current = _react2.default.cloneElement(current, { ref: function ref(_ref4) {
+						_this4.currentElement = _ref4;
+					}, className: current.props.className + ' ' + classes.end, key: 1 });
+
+				content = _react2.default.createElement(
+					'div',
+					{ className: className, style: style, ref: function ref(_ref5) {
+							return _this4.IS = _ref5;
 						} },
 					current
 				);
@@ -207,6 +257,30 @@ var IS = function (_Component2) {
 
 	return IS;
 }(_react.Component);
+
+IS.propTypes = {
+	sections: _react2.default.PropTypes.objectOf(function (propValue, key, componentName, location, propFullName) {
+		var fail = false;
+		var failDescription = null;
+
+		if (propValue[key].constructor === Array && propValue[key].length) {
+			propValue[key].forEach(function (section) {
+				if (!section.id) {
+					fail = true;
+					failDescription = 'Missing id.';
+				} else if (!section.component && !_react2.default.isValidElement(section.component)) {
+					failDescription = 'Missing component.';
+				}
+			});
+		} else {
+			fail = true;
+		}
+
+		if (fail) {
+			return new Error('Invalid prop ' + propFullName + ' supplied to ' + componentName + '. ' + failDescription + ' Validation failed.');
+		}
+	})
+};
 
 var Dispatcher = function () {
 	function Dispatcher() {
@@ -222,11 +296,11 @@ var Dispatcher = function () {
 		}
 	}, {
 		key: 'dispatch',
-		value: function dispatch(section, id, animation) {
+		value: function dispatch(section, id, inverse) {
 			var _this5 = this;
 
 			return function () {
-				_this5.callback(section, id, animation);
+				_this5.callback(section, id, !!inverse);
 			};
 		}
 	}]);
@@ -234,10 +308,61 @@ var Dispatcher = function () {
 	return Dispatcher;
 }();
 
-function onNextFrame(callback) {
-	setTimeout(function () {
-		window.requestAnimationFrame(callback);
-	}, 20);
+function addClasses(element, classNames) {
+	classNames.forEach(function (className) {
+		element.clientHeight;
+		element.classList.add(className);
+	});
+}
+
+function removeClasses(element, classNames) {
+	classNames.forEach(function (className) {
+		element.classList.remove(className);
+	});
+}
+
+function getLongerDuration(element_1, element_2) {
+	var elem_1_duration = getElementDuration(element_1);
+	var elem_2_duration = getElementDuration(element_2);
+
+	return elem_1_duration > elem_2_duration ? elem_1_duration : elem_2_duration;
+}
+
+function getElementDuration(element) {
+	var duration = 0;
+	var possibleMatch = void 0;
+
+	if (element) {
+		possibleMatch = getComputedStyle(element)['transition-duration'].match(/([0-9]*\.[0-9]+|[0-9]+)(ms|s)/i);
+
+		if (possibleMatch[1] && possibleMatch[2]) {
+			if (possibleMatch[2].toLowerCase() === 's') {
+				duration = parseFloat(possibleMatch[1]) * 1000;
+			} else {
+				duration = possibleMatch[1];
+			}
+		}
+	}
+
+	return duration;
+}
+
+function isFunction(object) {
+	return !!(object && object.constructor && object.call && object.apply);
+}
+
+function getCurrent(children, id) {
+	var fallback = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+
+	var result = fallback;
+
+	children.forEach(function (child) {
+		if (child.id === id) {
+			result = child;
+		}
+	});
+
+	return result;
 }
 
 //# sourceMappingURL=react-infinite-sections.js.map

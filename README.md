@@ -133,6 +133,7 @@ ReactDOM.render(basicWithAnimation, document.getElementById('app'));
 
 `app.scss`
 ```scss
+/*These classes are only for a nicer look*/
 .settings-wrapper {
 	width: 100%;
 	height: 100%;
@@ -175,6 +176,7 @@ ReactDOM.render(basicWithAnimation, document.getElementById('app'));
 	background-color: #607D8B;
 }
 
+/*These classes are responsible for animation*/
 .is-start__current {
 	left: 100%;
 }
