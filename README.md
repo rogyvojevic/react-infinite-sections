@@ -198,5 +198,6 @@ ReactDOM.render(basicWithAnimation, document.getElementById('app'));
 }
 ```
 
-Demo:
+### Demo
+
 [![react-infinite-sections.gif](http://gifyu.com/images/react-infinite-sections.gif)](http://gifyu.com/image/SMuj)
