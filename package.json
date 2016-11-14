@@ -12,7 +12,11 @@
     "infinite",
     "sectons"
   ],
-  "author": "Igor Radivojevic",
+  "author": "Igor Radivojevic <rogyvojevic@gmail.com>",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/rogyvoje/react-infinite-sections.git"
+  },
   "license": "MIT",
   "dependencies": {
     "react": "^15.3.2",
