@@ -14,6 +14,7 @@ npm install react-infinite-sections --save
 **`sections`** (function, required)
 Function to configure sections. Function can access **dispatch** method to render desired sections.
 Always return object with sections. Oherwise error will occur.
+
 **`dispatch`**
 Function that will be passed to a **sections**. Main purpose of this function is to render a section.
 Parameters:
@@ -26,6 +27,14 @@ Object to define start section.
 
 **`animate`** (boolean, optional, default value is **false**)
 Enable or disable animation.
+
+**`duration`** (number, optional)
+Before animation begins app logic will detect duration of the animation through CSS if it's given and valid.
+If it's not given or valid it will be zero, this duration will determine how much app logic will **wait before another render cycle begin**.
+That means that duration is **not gonna change CSS duration**.
+Useful when you want to define previous section to go slow, and current section to go fast.
+Must be in **miliseconds**
+
 
 **`className`** (string, optional)
 Define classes for a wrapper rendered by infinite sections.

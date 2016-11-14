@@ -24,7 +24,7 @@ export default class InfiniteSections extends Component {
 	}
 
 	render() {
-		let {style, className, sections, root, animate, onStart, onDone} = this.props;
+		let {style, className, sections, root, animate, duration, onStart, onDone} = this.props;
 		let disableNavigationWhileAnimating = true;
 
 		if (this.props.disableNavigationWhileAnimating === false) {
@@ -37,6 +37,7 @@ export default class InfiniteSections extends Component {
 				style={style}
 				dispatcher={this.dispatcher}
 				animate={animate}
+				duration={duration}
 				disableNavigationWhileAnimating={disableNavigationWhileAnimating}
 				onStart={isFunction(onStart) ? onStart : null}
 				onDone={isFunction(onDone) ? onDone : null}
@@ -146,7 +147,7 @@ class IS extends Component {
 				previous: null
 			}));
 			this.isAnimating = false;
-		}, getLongerDuration(this.previousElement, this.currentElement));
+		}, this.props.duration ? this.props.duration : getLongerDuration(this.previousElement, this.currentElement));
 	}
 
 	render() { 
