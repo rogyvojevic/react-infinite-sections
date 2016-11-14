@@ -118,27 +118,27 @@ class IS extends Component {
 	}
 
 	componentDidUpdate() {
-		if (this.props.animate && this.previousElement && this.currentElement) {
 
-			removeClasses(this.previousElement, Object.keys(classes).map(key => classes[key]));
-			removeClasses(this.currentElement, Object.keys(classes).map(key => classes[key]));
+		removeChildrenClasses(this.IS.children, Object.keys(classes).map(key => classes[key]));
 
+		if (this.props.animate && this.IS.children[0] && this.IS.children[1]) {
 			if (this.inverse) {
 				let {startPreviousInverse, startCurrentInverse, animatePreviousInverse, animateCurrentInverse} = classes; 
 
-				addClasses(this.previousElement, [startPreviousInverse, animatePreviousInverse]);
-				addClasses(this.currentElement, [startCurrentInverse, animateCurrentInverse]);
+				addClasses(this.IS.children[0], [startPreviousInverse, animatePreviousInverse]);
+				addClasses(this.IS.children[1], [startCurrentInverse, animateCurrentInverse]);
 				
 			} else {
 				let {startPrevious, startCurrent, animatePrevious, animateCurrent} = classes;
 				
-				addClasses(this.previousElement, [startPrevious, animatePrevious]);
-				addClasses(this.currentElement, [startCurrent, animateCurrent]);
+				addClasses(this.IS.children[0], [startPrevious, animatePrevious]);
+				addClasses(this.IS.children[1], [startCurrent, animateCurrent]);
 			}
 		}
 
 		if (!this.state.previous && this.state.current) {
 			this.props.onDone && this.props.onDone(this.previousData, this.currentData);
+			addChildrenClasses(this.IS.children, [classes.end]);
 		}
 		
 		this.isAnimating = true;
@@ -147,7 +147,7 @@ class IS extends Component {
 				previous: null
 			}));
 			this.isAnimating = false;
-		}, this.props.duration ? this.props.duration : getLongerDuration(this.previousElement, this.currentElement));
+		}, this.props.duration ? this.props.duration : getLongerDuration(this.IS.children[0], this.IS.children[1]));
 	}
 
 	render() { 
@@ -157,9 +157,6 @@ class IS extends Component {
 		let content = null;
 
 		if (animate && previous) {			
-			previous = React.cloneElement(previous, { ref: ref => { this.previousElement = ref }, key: 1 });
-			current = React.cloneElement(current, { ref: ref => { this.currentElement = ref }, key: 2 });
-
 			content = (
 				<div className={className} style={style} ref={ref => this.IS = ref}>
 					{previous}
@@ -168,8 +165,6 @@ class IS extends Component {
 			);
 
 		} else {
-			current = React.cloneElement(current, { ref: ref => { this.currentElement = ref }, className: `${current.props.className} ${classes.end}`, key: 1 });
-
 			content = (
 				<div className={className} style={style} ref={ref => this.IS = ref}>
 					{current}
@@ -230,10 +225,22 @@ function addClasses(element, classNames) {
 	});
 }
 
+function addChildrenClasses(children, classNames) {
+	for (let i = 0; i < children.length; i++) {
+		addClasses(children[i], classNames);
+	}
+}
+
 function removeClasses(element, classNames) {
 	classNames.forEach(className => {
 		element.classList.remove(className);
 	});
+}
+
+function removeChildrenClasses(children, classNames) {
+	for (let i = 0; i < children.length; i++) {
+		removeClasses(children[i], classNames);
+	}
 }
 
 function getLongerDuration(element_1, element_2) {
