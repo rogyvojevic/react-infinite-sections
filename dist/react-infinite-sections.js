@@ -167,15 +167,11 @@ var IS = function (_Component2) {
 		value: function componentDidUpdate() {
 			var _this3 = this;
 
-			if (this.props.animate && this.previousElement && this.currentElement) {
+			removeChildrenClasses(this.IS.children, Object.keys(classes).map(function (key) {
+				return classes[key];
+			}));
 
-				removeClasses(this.previousElement, Object.keys(classes).map(function (key) {
-					return classes[key];
-				}));
-				removeClasses(this.currentElement, Object.keys(classes).map(function (key) {
-					return classes[key];
-				}));
-
+			if (this.props.animate && this.IS.children[0] && this.IS.children[1]) {
 				if (this.inverse) {
 					var startPreviousInverse = classes.startPreviousInverse,
 					    startCurrentInverse = classes.startCurrentInverse,
@@ -183,8 +179,8 @@ var IS = function (_Component2) {
 					    animateCurrentInverse = classes.animateCurrentInverse;
 
 
-					addClasses(this.previousElement, [startPreviousInverse, animatePreviousInverse]);
-					addClasses(this.currentElement, [startCurrentInverse, animateCurrentInverse]);
+					addClasses(this.IS.children[0], [startPreviousInverse, animatePreviousInverse]);
+					addClasses(this.IS.children[1], [startCurrentInverse, animateCurrentInverse]);
 				} else {
 					var startPrevious = classes.startPrevious,
 					    startCurrent = classes.startCurrent,
@@ -192,13 +188,14 @@ var IS = function (_Component2) {
 					    animateCurrent = classes.animateCurrent;
 
 
-					addClasses(this.previousElement, [startPrevious, animatePrevious]);
-					addClasses(this.currentElement, [startCurrent, animateCurrent]);
+					addClasses(this.IS.children[0], [startPrevious, animatePrevious]);
+					addClasses(this.IS.children[1], [startCurrent, animateCurrent]);
 				}
 			}
 
 			if (!this.state.previous && this.state.current) {
 				this.props.onDone && this.props.onDone(this.previousData, this.currentData);
+				addChildrenClasses(this.IS.children, [classes.end]);
 			}
 
 			this.isAnimating = true;
@@ -207,7 +204,7 @@ var IS = function (_Component2) {
 					previous: null
 				}));
 				_this3.isAnimating = false;
-			}, this.props.duration ? this.props.duration : getLongerDuration(this.previousElement, this.currentElement));
+			}, this.props.duration ? this.props.duration : getLongerDuration(this.IS.children[0], this.IS.children[1]));
 		}
 	}, {
 		key: 'render',
@@ -224,30 +221,19 @@ var IS = function (_Component2) {
 			var content = null;
 
 			if (animate && previous) {
-				previous = _react2.default.cloneElement(previous, { ref: function ref(_ref) {
-						_this4.previousElement = _ref;
-					}, key: 1 });
-				current = _react2.default.cloneElement(current, { ref: function ref(_ref2) {
-						_this4.currentElement = _ref2;
-					}, key: 2 });
-
 				content = _react2.default.createElement(
 					'div',
-					{ className: className, style: style, ref: function ref(_ref3) {
-							return _this4.IS = _ref3;
+					{ className: className, style: style, ref: function ref(_ref) {
+							return _this4.IS = _ref;
 						} },
 					previous,
 					current
 				);
 			} else {
-				current = _react2.default.cloneElement(current, { ref: function ref(_ref4) {
-						_this4.currentElement = _ref4;
-					}, className: current.props.className + ' ' + classes.end, key: 1 });
-
 				content = _react2.default.createElement(
 					'div',
-					{ className: className, style: style, ref: function ref(_ref5) {
-							return _this4.IS = _ref5;
+					{ className: className, style: style, ref: function ref(_ref2) {
+							return _this4.IS = _ref2;
 						} },
 					current
 				);
@@ -317,10 +303,22 @@ function addClasses(element, classNames) {
 	});
 }
 
+function addChildrenClasses(children, classNames) {
+	for (var i = 0; i < children.length; i++) {
+		addClasses(children[i], classNames);
+	}
+}
+
 function removeClasses(element, classNames) {
 	classNames.forEach(function (className) {
 		element.classList.remove(className);
 	});
+}
+
+function removeChildrenClasses(children, classNames) {
+	for (var i = 0; i < children.length; i++) {
+		removeClasses(children[i], classNames);
+	}
 }
 
 function getLongerDuration(element_1, element_2) {
