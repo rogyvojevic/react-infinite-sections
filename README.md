@@ -197,3 +197,7 @@ ReactDOM.render(basicWithAnimation, document.getElementById('app'));
 	transform: translate3d(100%, 0, 0);
 }
 ```
+
+### Demo
+
+[![react-infinite-sections.gif](http://gifyu.com/images/react-infinite-sections.gif)](http://gifyu.com/image/SMuj)
