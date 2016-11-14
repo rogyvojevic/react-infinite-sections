@@ -57,6 +57,7 @@ var InfiniteSections = function (_Component) {
 			    sections = _props.sections,
 			    root = _props.root,
 			    animate = _props.animate,
+			    duration = _props.duration,
 			    onStart = _props.onStart,
 			    onDone = _props.onDone;
 
@@ -71,6 +72,7 @@ var InfiniteSections = function (_Component) {
 				style: style,
 				dispatcher: this.dispatcher,
 				animate: animate,
+				duration: duration,
 				disableNavigationWhileAnimating: disableNavigationWhileAnimating,
 				onStart: isFunction(onStart) ? onStart : null,
 				onDone: isFunction(onDone) ? onDone : null,
@@ -205,7 +207,7 @@ var IS = function (_Component2) {
 					previous: null
 				}));
 				_this3.isAnimating = false;
-			}, getLongerDuration(this.previousElement, this.currentElement));
+			}, this.props.duration ? this.props.duration : getLongerDuration(this.previousElement, this.currentElement));
 		}
 	}, {
 		key: 'render',
