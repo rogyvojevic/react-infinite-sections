@@ -112,7 +112,7 @@ var IS = function (_Component2) {
 		_this2.isAnimating = false;
 		_this2.timeoutId = null;
 		_this2.inverse = null;
-		_this2.state.current = getCurrent(_this2.state.sections[_this2.props.root.section], _this2.props.root.id);
+		_this2.state.current = getSection(_this2.props.sections[_this2.props.root.section], _this2.props.root.id);
 
 		_this2.previousData = null;
 		_this2.currentData = _this2.props.root;
@@ -135,7 +135,7 @@ var IS = function (_Component2) {
 
 			if (this.state.sections) {
 				if (this.state.sections[section] && id) {
-					current = getCurrent(this.state.sections[section], id, this.state.current);
+					current = getSection(this.props.sections[section], id, this.state.current);
 				} else {
 					throw new Error('Trying to access sections[\'' + section + '\']\' with id ' + id);
 				}
@@ -146,21 +146,16 @@ var IS = function (_Component2) {
 			clearTimeout(this.timeoutId);
 
 			if (this.props.onStart) {
-				this.previousData = { section: this.currentData.section, id: this.currentData.id };
-				this.currentData = { section: section, id: id };
-
 				this.props.onStart(this.previousData, this.currentData);
 			}
 
+			this.previousData = { section: this.currentData.section, id: this.currentData.id };
+			this.currentData = { section: section, id: id };
+			this.didUpdate = true;
 			this.setState(_extends({}, this.state, {
 				previous: this.state.current,
 				current: current
 			}));
-		}
-	}, {
-		key: 'shouldComponentUpdate',
-		value: function shouldComponentUpdate(nextProps, nextState) {
-			return this.state.previous || nextState.previous;
 		}
 	}, {
 		key: 'componentDidUpdate',
@@ -198,13 +193,16 @@ var IS = function (_Component2) {
 				addChildrenClasses(this.IS.children, [classes.end]);
 			}
 
-			this.isAnimating = true;
-			this.timeoutId = setTimeout(function () {
-				_this3.setState(_extends({}, _this3.state, {
-					previous: null
-				}));
-				_this3.isAnimating = false;
-			}, this.props.duration ? this.props.duration : getLongerDuration(this.IS.children[0], this.IS.children[1]));
+			if (this.didUpdate) {
+				this.isAnimating = true;
+				this.timeoutId = setTimeout(function () {
+					_this3.didUpdate = false;
+					_this3.setState(_extends({}, _this3.state, {
+						previous: null
+					}));
+					_this3.isAnimating = false;
+				}, this.props.duration ? this.props.duration : getLongerDuration(this.IS.children[0], this.IS.children[1]));
+			}
 		}
 	}, {
 		key: 'render',
@@ -216,9 +214,22 @@ var IS = function (_Component2) {
 			    className = _props2.className,
 			    animate = _props2.animate;
 
-			var previous = this.state.previous && this.state.previous.component;
-			var current = this.state.current.component;
+			var previous = null;
+			var current = null;
+
+			var currentSection = this.currentData.section;
+			var currentId = this.currentData.id;
+
 			var content = null;
+
+			if (this.state.previous && this.state.previous.component) {
+				var previousSection = this.previousData.section;
+				var previousId = this.previousData.id;
+
+				previous = getSection(this.props.sections[previousSection], previousId, null);
+			}
+
+			current = getSection(this.props.sections[currentSection], currentId, null);
 
 			if (animate && previous) {
 				content = _react2.default.createElement(
@@ -226,8 +237,8 @@ var IS = function (_Component2) {
 					{ className: className, style: style, ref: function ref(_ref) {
 							return _this4.IS = _ref;
 						} },
-					previous,
-					current
+					previous.component,
+					current.component
 				);
 			} else {
 				content = _react2.default.createElement(
@@ -235,7 +246,7 @@ var IS = function (_Component2) {
 					{ className: className, style: style, ref: function ref(_ref2) {
 							return _this4.IS = _ref2;
 						} },
-					current
+					current.component
 				);
 			}
 
@@ -351,7 +362,7 @@ function isFunction(object) {
 	return !!(object && object.constructor && object.call && object.apply);
 }
 
-function getCurrent(children, id) {
+function getSection(children, id) {
 	var fallback = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
 	var result = fallback;
