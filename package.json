@@ -1,6 +1,6 @@
 {
   "name": "react-infinite-sections",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "Routing on js level.",
   "main": "./dist/react-infinite-sections.js",
   "scripts": {
