@@ -69,7 +69,7 @@ class IS extends Component {
 		this.isAnimating = false;
 		this.timeoutId = null;
 		this.inverse = null;
-		this.state.current = getCurrent(this.state.sections[this.props.root.section], this.props.root.id);
+		this.state.current = getSection(this.props.sections[this.props.root.section], this.props.root.id);
 
 		this.previousData = null;
 		this.currentData = this.props.root;
@@ -89,7 +89,7 @@ class IS extends Component {
 
 		if (this.state.sections) {
 			if (this.state.sections[section] && id) {
-				current = getCurrent(this.state.sections[section], id, this.state.current);
+				current = getSection(this.props.sections[section], id, this.state.current);
 			} else {
 				throw new Error(`Trying to access sections['${section}']' with id ${id}`);
 			}
@@ -100,21 +100,16 @@ class IS extends Component {
 		clearTimeout(this.timeoutId);
 
 		if (this.props.onStart) {
-			this.previousData = { section: this.currentData.section, id: this.currentData.id };
-			this.currentData = { section, id }
-
 			this.props.onStart(this.previousData, this.currentData);
 		}
 
-		
+		this.previousData = { section: this.currentData.section, id: this.currentData.id };
+		this.currentData = { section, id };
+		this.didUpdate = true;
 		this.setState(Object.assign({}, this.state, {
 			previous: this.state.current,
 			current
 		}));
-	}
-
-	shouldComponentUpdate(nextProps, nextState) {
-		return this.state.previous || nextState.previous;
 	}
 
 	componentDidUpdate() {
@@ -140,34 +135,50 @@ class IS extends Component {
 			this.props.onDone && this.props.onDone(this.previousData, this.currentData);
 			addChildrenClasses(this.IS.children, [classes.end]);
 		}
-		
-		this.isAnimating = true;
-		this.timeoutId = setTimeout(() => {
-			this.setState(Object.assign({}, this.state, {
-				previous: null
-			}));
-			this.isAnimating = false;
-		}, this.props.duration ? this.props.duration : getLongerDuration(this.IS.children[0], this.IS.children[1]));
+
+		if (this.didUpdate) {
+			this.isAnimating = true;
+			this.timeoutId = setTimeout(() => {
+				this.didUpdate = false;
+				this.setState(Object.assign({}, this.state, {
+					previous: null
+				}));
+				this.isAnimating = false;
+			}, this.props.duration ? this.props.duration : getLongerDuration(this.IS.children[0], this.IS.children[1]));
+		}
 	}
 
 	render() { 
 		let { style, className, animate } = this.props;
-		let previous = this.state.previous && this.state.previous.component;
-		let current = this.state.current.component;
+		let previous = null;
+		let current = null;
+
+		let currentSection = this.currentData.section;
+		let currentId = this.currentData.id;
+
 		let content = null;
+
+		if (this.state.previous && this.state.previous.component) {
+			let previousSection = this.previousData.section;
+			let previousId = this.previousData.id;
+
+			previous = getSection(this.props.sections[previousSection], previousId, null);
+		}
+		
+		current = getSection(this.props.sections[currentSection], currentId, null);
 
 		if (animate && previous) {			
 			content = (
 				<div className={className} style={style} ref={ref => this.IS = ref}>
-					{previous}
-					{current}
+					{previous.component}
+					{current.component}
 				</div>
 			);
 
 		} else {
 			content = (
 				<div className={className} style={style} ref={ref => this.IS = ref}>
-					{current}
+					{current.component}
 				</div>
 			);
 		}
@@ -273,7 +284,7 @@ function isFunction(object) {
 	return !!(object && object.constructor && object.call && object.apply);
 }
 
-function getCurrent(children, id, fallback = null) {
+function getSection(children, id, fallback = null) {
 	let result = fallback;
 
 	children.forEach(child => {
