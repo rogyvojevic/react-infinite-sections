@@ -156,7 +156,7 @@ var IS = function (_Component2) {
 			this.previousData = { section: this.currentData.section, id: this.currentData.id };
 			this.currentData = { section: section, id: id };
 			this.didUpdate = true;
-			this.setState(_extends({}, this.state, {
+			this.setState(Object.assign({}, this.state, {
 				previous: this.state.current,
 				current: current
 			}));
@@ -201,7 +201,7 @@ var IS = function (_Component2) {
 				this.isAnimating = true;
 				this.timeoutId = setTimeout(function () {
 					_this3.didUpdate = false;
-					_this3.setState(_extends({}, _this3.state, {
+					_this3.setState(Object.assign({}, _this3.state, {
 						previous: null
 					}));
 					_this3.isAnimating = false;
