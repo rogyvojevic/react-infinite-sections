@@ -12,6 +12,10 @@ var _react = require('react');
 
 var _react2 = _interopRequireDefault(_react);
 
+var _propTypes = require('prop-types');
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -89,11 +93,11 @@ exports.default = InfiniteSections;
 
 
 InfiniteSections.propTypes = {
-	root: _react2.default.PropTypes.shape({
-		section: _react2.default.PropTypes.string.isRequired,
-		id: _react2.default.PropTypes.string.isRequired
+	root: _propTypes2.default.shape({
+		section: _propTypes2.default.string.isRequired,
+		id: _propTypes2.default.string.isRequired
 	}),
-	sections: _react2.default.PropTypes.func.isRequired
+	sections: _propTypes2.default.func.isRequired
 };
 
 var IS = function (_Component2) {
@@ -258,7 +262,7 @@ var IS = function (_Component2) {
 }(_react.Component);
 
 IS.propTypes = {
-	sections: _react2.default.PropTypes.objectOf(function (propValue, key, componentName, location, propFullName) {
+	sections: _propTypes2.default.objectOf(function (propValue, key, componentName, location, propFullName) {
 		var fail = false;
 		var failDescription = null;
 

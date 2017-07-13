@@ -1,11 +1,11 @@
 {
   "name": "react-infinite-sections",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Routing on js level.",
   "main": "./dist/react-infinite-sections.js",
   "scripts": {
     "start": "node_modules/.bin/webpack-dev-server",
-    "production": "babel ./src/main.js --out-file ./dist/react-infinite-sections.js --source-maps"
+    "production": "node_modules/.bin/babel ./src/main.js --out-file ./dist/react-infinite-sections.js --source-maps"
   },
   "keywords": [
     "react",
@@ -19,10 +19,12 @@
   },
   "license": "MIT",
   "dependencies": {
-    "react": "^15.3.2",
-    "react-dom": "^15.3.2"
+    "prop-types": "^15.5.10",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1"
   },
   "devDependencies": {
+    "babel-cli": "^6.24.1",
     "babel-core": "^6.18.2",
     "babel-eslint": "^7.1.0",
     "babel-loader": "^6.2.7",

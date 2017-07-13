@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import PropTypes from "prop-types";
 
 const classes = {
 	startPrevious: 'is-start__previous',
@@ -49,11 +50,11 @@ export default class InfiniteSections extends Component {
 }
 
 InfiniteSections.propTypes = {
-	root: React.PropTypes.shape({
-		section: React.PropTypes.string.isRequired,
-		id: React.PropTypes.string.isRequired
+	root: PropTypes.shape({
+		section: PropTypes.string.isRequired,
+		id: PropTypes.string.isRequired
 	}),
-	sections: React.PropTypes.func.isRequired
+	sections: PropTypes.func.isRequired
 };
 
 class IS extends Component {
@@ -188,7 +189,7 @@ class IS extends Component {
 }
 
 IS.propTypes = {
-	sections: React.PropTypes.objectOf((propValue, key, componentName, location, propFullName) => {
+	sections: PropTypes.objectOf((propValue, key, componentName, location, propFullName) => {
 		let fail = false;
 		let failDescription = null;
 
