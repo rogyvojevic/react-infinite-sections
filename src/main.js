@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from "prop-types";
 
 const classes = {
@@ -25,7 +25,7 @@ export default class InfiniteSections extends Component {
 	}
 
 	render() {
-		let {style, className, sections, root, animate, duration, onStart, onDone} = this.props;
+		let { style, className, sections, root, animate, duration, onStart, onDone } = this.props;
 		let disableNavigationWhileAnimating = true;
 
 		if (this.props.disableNavigationWhileAnimating === false) {
@@ -77,7 +77,7 @@ class IS extends Component {
 
 		this.props.dispatcher.register((section, id, inverse) => {
 			if (this.isAnimating && this.props.disableNavigationWhileAnimating) {
-				return;	
+				return;
 			}
 
 			this.inverse = inverse;
@@ -85,7 +85,7 @@ class IS extends Component {
 		});
 	}
 
-	updateState(section, id) {		
+	updateState(section, id) {
 		let current = null;
 
 		if (this.state.sections) {
@@ -97,7 +97,7 @@ class IS extends Component {
 		} else {
 			throw new Error(`Missing sections object`);
 		}
-		
+
 		clearTimeout(this.timeoutId);
 
 		if (this.props.onStart) {
@@ -119,14 +119,14 @@ class IS extends Component {
 
 		if (this.props.animate && this.IS.children[0] && this.IS.children[1]) {
 			if (this.inverse) {
-				let {startPreviousInverse, startCurrentInverse, animatePreviousInverse, animateCurrentInverse} = classes; 
+				let { startPreviousInverse, startCurrentInverse, animatePreviousInverse, animateCurrentInverse } = classes;
 
 				addClasses(this.IS.children[0], [startPreviousInverse, animatePreviousInverse]);
 				addClasses(this.IS.children[1], [startCurrentInverse, animateCurrentInverse]);
-				
+
 			} else {
-				let {startPrevious, startCurrent, animatePrevious, animateCurrent} = classes;
-				
+				let { startPrevious, startCurrent, animatePrevious, animateCurrent } = classes;
+
 				addClasses(this.IS.children[0], [startPrevious, animatePrevious]);
 				addClasses(this.IS.children[1], [startCurrent, animateCurrent]);
 			}
@@ -149,7 +149,7 @@ class IS extends Component {
 		}
 	}
 
-	render() { 
+	render() {
 		let { style, className, animate } = this.props;
 		let previous = null;
 		let current = null;
@@ -165,26 +165,17 @@ class IS extends Component {
 
 			previous = getSection(this.props.sections[previousSection], previousId, null);
 		}
-		
+
 		current = getSection(this.props.sections[currentSection], currentId, null);
 
-		if (animate && previous) {			
-			content = (
-				<div className={className} style={style} ref={ref => this.IS = ref}>
-					{previous.component}
-					{current.component}
-				</div>
-			);
+		content = (
+			<div className={className} style={style} ref={ref => this.IS = ref}>				
+				{animate && previous ? previous.component : null}
+				{current.component}
+			</div>
+		);
 
-		} else {
-			content = (
-				<div className={className} style={style} ref={ref => this.IS = ref}>
-					{current.component}
-				</div>
-			);
-		}
-				
-		return (content);
+		return content;
 	}
 }
 

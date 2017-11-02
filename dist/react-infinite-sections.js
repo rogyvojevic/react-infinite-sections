@@ -235,24 +235,14 @@ var IS = function (_Component2) {
 
 			current = getSection(this.props.sections[currentSection], currentId, null);
 
-			if (animate && previous) {
-				content = _react2.default.createElement(
-					'div',
-					{ className: className, style: style, ref: function ref(_ref) {
-							return _this4.IS = _ref;
-						} },
-					previous.component,
-					current.component
-				);
-			} else {
-				content = _react2.default.createElement(
-					'div',
-					{ className: className, style: style, ref: function ref(_ref2) {
-							return _this4.IS = _ref2;
-						} },
-					current.component
-				);
-			}
+			content = _react2.default.createElement(
+				'div',
+				{ className: className, style: style, ref: function ref(_ref) {
+						return _this4.IS = _ref;
+					} },
+				animate && previous ? previous.component : null,
+				current.component
+			);
 
 			return content;
 		}
